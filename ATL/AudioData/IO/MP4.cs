@@ -540,6 +540,23 @@ namespace ATL.AudioData.IO
                 }
             }
 
+            // == XMP
+            source.BaseStream.Seek(sizeInfo.ID3v2Size, SeekOrigin.Begin);
+            uint uuidSize = navigateToAtom(source, "uuid");
+            if (uuidSize > 24)
+            {
+                // Read the first 16 bytes, and see if it's the XMP guid
+                var xmpUuid = new byte[] { 0xbe, 0x7a, 0xcf, 0xcb, 0x97, 0xa9, 0x42, 0xe8, 0x9c, 0x71, 0x99, 0x94, 0x91, 0xe3, 0xaf, 0xac };
+                var sectionUuid = source.ReadBytes(16);
+                    
+                if (sectionUuid.SequenceEqual(xmpUuid))
+                {
+                    var xmpBytes = source.ReadBytes((int)uuidSize - 16);
+                    var xmpString = Encoding.UTF8.GetString(xmpBytes);
+                    setXtraField("XMP", xmpString, true);
+                }
+            }
+
             return true;
         }
 
